@@ -2,7 +2,7 @@ import re, time, string, sys
 
 ignore = str.maketrans(dict.fromkeys(string.punctuation))
 
-def tokenize(file):
+def tokenize(file, fun, *args):
 	starttime = time.time()
 
 	tokens = []
@@ -16,14 +16,22 @@ def tokenize(file):
 			for word in line:
 				word = (word.translate(ignore)).lower()
 				if word.isalpha():
-					tokens.append(word)
+					fun(word, *args)
+			
 				
 	end = time.time() -starttime
-	print("Tokenizaiton time", end)			
-	return tokens
+	print("Tokenizaiton time", end)	
+
+def getTokenList(token, tokens):
+
+	tokens.append(token)
+	
 
 if __name__ == "__main__":
 
-	print(len(tokenize(sys.argv[1])))
+	tokens = []
+	tokenize(sys.argv[1],getTokenList, tokens)
+	print(tokens)
+
 
 
