@@ -4,14 +4,15 @@ import pickle
 import os.path
 
 
-def createdictionary(word, dictionary):
+def createdictionary(tokens, dictionary):
 
-    count = len(dictionary)
+	for word in tokens:
+		count = len(dictionary)
 
-    if word not in dictionary:
+		if word not in dictionary:
 
-        dictionary[word] = count
-        count += 1
+			dictionary[word] = count
+			count += 1
 
 
 def getDictFromDisk(dictname):
@@ -38,7 +39,7 @@ def saveDictToDisk(dict, dictname):
 def main(file, dictname):
 
     dictionary = getDictFromDisk(dictname)
-    tokenization.tokenize(file, createdictionary, dictionary)
+    tokenization.tokenizeFile(file, createdictionary, dictionary)
     print("Current size of dictionary '", dictname, "':",
           sys.getsizeof(dictionary) / 1000000, "Mbytes")
     saveDictToDisk(dictionary, dictname)
