@@ -9,12 +9,12 @@ def createdictionary(tokens,linenumber, dictionary):
 	for word in tokens:
 		count = len(dictionary)
 
-		if word not in dictionary:
 
+		if word not in dictionary:
 			dictionary[word] = count
-			dictionary["0"] = linenumber
-			print(dictionary["0"])
-			count += 1
+			
+			
+	dictionary["0"] = linenumber
 
 
 def getDictFromDisk(dictname):

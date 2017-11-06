@@ -3,6 +3,7 @@ import tokenization as tk
 import sys
 import time
 import numpy as np
+from scipy.sparse import lil_matrix
 
 
 def getLines(tokens, linenumber, dictionary, matrix):
@@ -21,24 +22,23 @@ def main(file, dictionaryname):
     tk.tokenize(file, getLines, dictionary, matrix)
     end = time.time() - starttime
     print("Time for TF matrix:", end)
-
+    print("Current size of tf matrix'",
+          sys.getsizeof(matrix) / 1000000, "Mbytes")
+    print(matrix[0])
 
 def addToTfMatrix(element, linenumber, matrix):
-	#print(linenumber)
-	if linenumber < 31081:
 
-		matrix[linenumber, element] += 1
+	matrix[linenumber-1, element] += 1
 
 
 def initializeTfMatrix(numberoflines, dictlength):
 
 
-    
-    matrix = np.zeros((numberoflines, dictlength))
+    matrix = lil_matrix((numberoflines, dictlength))
     print(matrix.shape)
     return matrix
 
 if __name__ == '__main__':
 
     main(sys.argv[1], sys.argv[2])
-    initializeTfMatrix(sys.argv[1])
+    

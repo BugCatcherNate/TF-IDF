@@ -7,6 +7,7 @@ ignore = str.maketrans(dict.fromkeys(string.punctuation))
 
 
 def tokenize(file, fun, *args):
+
     starttime = time.time()
 
     tokens = []
@@ -14,23 +15,26 @@ def tokenize(file, fun, *args):
     with open(file, 'r') as myfile:
 
         for line in myfile:
-
-            tokenizeLine(line,linenumber, fun, *args)
-            linenumber +=1
+        	linenumber = tokenizeLine(line,linenumber, fun, *args)
+        
     endtime = time.time() - starttime
-    print("shouldbe",linenumber)
-    print(endtime)
+    
+    print("Time to create dictionary:",endtime)
+
 
 def tokenizeLine(line, linenumber, fun, *args):
 	tokens = []
 	line = line.split(" ")
-
+	notempy = False
 	for word in line:
 
 		word = (word.translate(ignore)).lower()
 		if word.isalpha():
+			notempy = True
 			tokens.append(word)
 	fun(tokens, linenumber, *args)
+	linenumber +=1
+	return linenumber
 
 
 def getTokenList(token, tokens):
