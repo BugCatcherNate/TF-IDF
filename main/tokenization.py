@@ -6,21 +6,22 @@ import sys
 ignore = str.maketrans(dict.fromkeys(string.punctuation))
 
 
-def tokenizeFile(file, fun, *args):
+def tokenize(file, fun, *args):
     starttime = time.time()
 
     tokens = []
-
+    linenumber = 0
     with open(file, 'r') as myfile:
 
         for line in myfile:
 
-            tokenizeLine(line, fun, *args)
+            tokenizeLine(line,linenumber, fun, *args)
+            linenumber +=1
+    endtime = time.time() - starttime
+    print("shouldbe",linenumber)
+    print(endtime)
 
-    end = time.time() - starttime
-    print("Tokenizaiton time", end)
-
-def tokenizeLine(line, fun, *args):
+def tokenizeLine(line, linenumber, fun, *args):
 	tokens = []
 	line = line.split(" ")
 
@@ -29,7 +30,7 @@ def tokenizeLine(line, fun, *args):
 		word = (word.translate(ignore)).lower()
 		if word.isalpha():
 			tokens.append(word)
-	fun(tokens, *args)
+	fun(tokens, linenumber, *args)
 
 
 def getTokenList(token, tokens):
