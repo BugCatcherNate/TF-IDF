@@ -10,7 +10,6 @@ def tokenize(file, fun, *args):
 
     starttime = time.time()
 
-    tokens = []
     linenumber = 0
     with open(file, 'r') as myfile:
 

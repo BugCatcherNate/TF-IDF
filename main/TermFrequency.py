@@ -6,12 +6,12 @@ import numpy as np
 from scipy.sparse import lil_matrix
 
 
-def getLines(tokens, linenumber, dictionary, matrix):
+def getLines(tokens, dictionary, linenumber, matrix):
 
     for token in tokens:
         if token in dictionary:
             element = dictionary[token]
-            addToTfMatrix(element, linenumber, matrix)
+            incrementMatrix(element, linenumber, matrix)
 
 
 def main(file, dictionaryname):
@@ -26,16 +26,20 @@ def main(file, dictionaryname):
           sys.getsizeof(matrix) / 1000000, "Mbytes")
     print(matrix[0])
 
-def addToTfMatrix(element, linenumber, matrix):
+def incrementMatrix(element,linenumber, matrix):
+    matrix[linenumber,element] += 1
+    #print(matrix)
 
-	matrix[linenumber-1, element] += 1
+def addToTfMatrix(array, linenumber, matrix):
+
+    array = np.asarray(array)
+    np.insert(matrix, linenumber, array, axis=0)
 
 
-def initializeTfMatrix(numberoflines, dictlength):
+def initializeTfMatrix(numberoflines, length):
 
 
-    matrix = lil_matrix((numberoflines, dictlength))
-    print(matrix.shape)
+    matrix = lil_matrix((numberoflines, length))
     return matrix
 
 if __name__ == '__main__':
