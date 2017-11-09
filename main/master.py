@@ -1,9 +1,25 @@
 import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys
-from scipy.sparse import lil_matrix
+from scipy import sparse
 
 def produce(file, q, numberofprocesses, dictionary, dictionarylength, slave):
 	
-	tokenization.tokenize(file, addToQueue, q )
+	linenumber = 0
+	lines = []
+	buffersize = 2000
+	count = 0
+	with open(file, 'r') as myfile:
+
+		for line in myfile:
+			count += 1
+			lines.append(line)
+			linenumber += 1
+			if linenumber == buffersize:
+				q.put(lines)
+				lines = []
+				linenumber = 0
+		q.put(lines)
+		print(count)
+			
 	for i in range(0, numberofprocesses):
 		q.put(None)
 	print("becoming consumer")
@@ -12,37 +28,33 @@ def produce(file, q, numberofprocesses, dictionary, dictionarylength, slave):
 	
 def consume(q, dictionary, i, dictionarylength, slave):
 
-	buffersize = 1000
-	local = TermFrequency.initializeTfMatrix(buffersize, dictionarylength)
+	local_collect = None
 	linenumber = 0	
-
+	count = 0
 	while True:
-
+		
 		lineset = q.get()
+	
 		if lineset is None:
-
-			if(linenumber > 0):
-				lock.acquire()
-				slave.send((local,i))
-				lock.release()
 			
-			slave.send(None)
-			print(i, "is done")
+			
+			print(i, "finished at", count)
+			slave.put(local_collect)
+			slave.put(None)
 			break
 
-		tokens = lineset
-		TermFrequency.getLines(tokens, dictionary, linenumber, local)
-		linenumber += 1
-		if(linenumber == buffersize):
-			print(i, "sending")
-			lock.acquire()
-			slave.send((local,i))
-			lock.release()
-			local = TermFrequency.initializeTfMatrix(buffersize, dictionarylength)
-			linenumber = 0
+		local = TermFrequency.initializeTfMatrix(len(lineset), dictionarylength)
+		for line in lineset:
+			count += 1
+			TermFrequency.getLines(line, dictionary, linenumber, local, len(lineset))
+			linenumber += 1
+		linenumber = 0
+		if local_collect == None:
+			local_collect = local
+		else:
+			local_collect = sparse.vstack((local_collect, local)) 
 
-	
-
+			
 def addToQueue(tokens,linenumber,q):
 
 	q.put(tokens)
@@ -50,49 +62,50 @@ def addToQueue(tokens,linenumber,q):
 
 if __name__ == "__main__":
 
-	lock = multiprocessing.Lock()
 	input_q = multiprocessing.Queue()
-	master, slave = multiprocessing.Pipe(False)
+	outupt_q = multiprocessing.Queue()
 	pool = []
 	done = 0
 	numberofprocesses = multiprocessing.cpu_count()
-	numberofprocesses = 2
 	print(numberofprocesses)
 	dictionary = create_dictionary.getDictFromDisk('dict')
 	dictionarylength = len(dictionary)
+	print(dictionary["0"])
 	# matrix = TermFrequency.initializeTfMatrix(dictionary["0"], dictionarylength)
 	start = time.time()
 	for i in range(0,numberofprocesses):
 
 		if i == 0:
-			process = multiprocessing.Process(target=produce, args=(sys.argv[1], input_q, numberofprocesses, dictionary, dictionarylength, slave))
+			process = multiprocessing.Process(target=produce, args=(sys.argv[1], input_q, numberofprocesses, dictionary, dictionarylength, outupt_q))
 		else:
-			process = multiprocessing.Process(target=consume, args=(input_q, dictionary, i, dictionarylength, slave))
+			process = multiprocessing.Process(target=consume, args=(input_q, dictionary, i, dictionarylength, outupt_q))
 		
 		process.start()
 		pool.append(process)
-	count = 0
 
+	A = None
 	while True:
-
-		local = master.recv()
-		if local == None:
-
+		
+		B = outupt_q.get()
+		if B == None:
 			done += 1
-			print("dones",done)
 			if done == numberofprocesses:
 				break
-		else:		
-			print("recved", local[1])
-			count +=1
-			print(count * 1000)
-			
+		if A == None:
+			A = B
+			print("Started")
+		elif B != None:
+			A = sparse.vstack((A,B))
+			print("growing", A.get_shape())
+
+	print(A.get_shape())
+	print(A)
 	for t in pool:
 		t.join()
 	end = time.time() - start 	
 
-	# print("Current size of tf matrix'",
- #          sys.getsizeof(matrix) / 1000, "Kbytes")
+	print("Current size of tf matrix'",
+          sys.getsizeof(A) / 1000, "Kbytes")
 	print(end)
 	
 	

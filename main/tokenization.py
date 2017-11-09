@@ -21,7 +21,7 @@ def tokenize(file, fun, *args):
     print("Time to create dictionary:",endtime)
 
 
-def tokenizeLine(line, linenumber, fun, *args):
+def tokenizeLine(line):
 	tokens = []
 	line = line.split(" ")
 	notempy = False
@@ -31,9 +31,7 @@ def tokenizeLine(line, linenumber, fun, *args):
 		if word.isalpha():
 			notempy = True
 			tokens.append(word)
-	fun(tokens, linenumber, *args)
-	linenumber +=1
-	return linenumber
+	return tokens
 
 
 def getTokenList(token, tokens):

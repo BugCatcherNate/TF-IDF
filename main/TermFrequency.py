@@ -3,15 +3,17 @@ import tokenization as tk
 import sys
 import time
 import numpy as np
-from scipy.sparse import lil_matrix
+from scipy import sparse
 
 
-def getLines(tokens, dictionary, linenumber, matrix):
-
-    for token in tokens:
+def getLines(line, dictionary, linenumber, matrix, buffersize):
+    
+    line = tk.tokenizeLine(line)
+    for token in line:
         if token in dictionary:
             element = dictionary[token]
             incrementMatrix(element, linenumber, matrix)
+
 
 
 def main(file, dictionaryname):
@@ -27,8 +29,8 @@ def main(file, dictionaryname):
     print(matrix[0])
 
 def incrementMatrix(element,linenumber, matrix):
+    
     matrix[linenumber,element] += 1
-    #print(matrix)
 
 def addToTfMatrix(array, linenumber, matrix):
 
@@ -39,7 +41,7 @@ def addToTfMatrix(array, linenumber, matrix):
 def initializeTfMatrix(numberoflines, length):
 
 
-    matrix = lil_matrix((numberoflines, length))
+    matrix = sparse.lil_matrix((numberoflines, length))
     return matrix
 
 if __name__ == '__main__':
