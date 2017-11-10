@@ -9,12 +9,12 @@ from scipy import sparse
 def getLines(line, dictionary, linenumber, matrix, buffersize):
     
     line = tk.tokenizeLine(line)
+    tokencount = len(line)
     for token in line:
         if token in dictionary:
             element = dictionary[token]
-            incrementMatrix(element, linenumber, matrix)
-
-
+            incrementMatrix(element, linenumber, matrix, tokencount)
+  
 
 def main(file, dictionaryname):
 
@@ -28,9 +28,10 @@ def main(file, dictionaryname):
           sys.getsizeof(matrix) / 1000000, "Mbytes")
     print(matrix[0])
 
-def incrementMatrix(element,linenumber, matrix):
+def incrementMatrix(element,linenumber, matrix, factor):
     
-    matrix[linenumber,element] += 1
+    matrix[linenumber,element] += 1/factor
+
 
 def addToTfMatrix(array, linenumber, matrix):
 
@@ -41,7 +42,7 @@ def addToTfMatrix(array, linenumber, matrix):
 def initializeTfMatrix(numberoflines, length):
 
 
-    matrix = sparse.lil_matrix((numberoflines, length))
+    matrix = sparse.lil_matrix((numberoflines, length), dtype='float')
     return matrix
 
 if __name__ == '__main__':

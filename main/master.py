@@ -5,7 +5,7 @@ def produce(file, q, numberofprocesses, dictionary, dictionarylength, slave):
 	
 	linenumber = 0
 	lines = []
-	buffersize = 2000
+	buffersize = 5000
 	count = 0
 	with open(file, 'r') as myfile:
 
@@ -37,8 +37,6 @@ def consume(q, dictionary, i, dictionarylength, slave):
 	
 		if lineset is None:
 			
-			
-			print(i, "finished at", count)
 			slave.put(local_collect)
 			slave.put(None)
 			break
@@ -53,7 +51,7 @@ def consume(q, dictionary, i, dictionarylength, slave):
 			local_collect = local
 		else:
 			local_collect = sparse.vstack((local_collect, local)) 
-
+		print(i, (local_collect.data.nbytes)/1000000)
 			
 def addToQueue(tokens,linenumber,q):
 
@@ -63,7 +61,7 @@ def addToQueue(tokens,linenumber,q):
 if __name__ == "__main__":
 
 	input_q = multiprocessing.Queue()
-	outupt_q = multiprocessing.Queue()
+	outupt_q = multiprocessing.Queue()  
 	pool = []
 	done = 0
 	numberofprocesses = multiprocessing.cpu_count()
@@ -71,7 +69,6 @@ if __name__ == "__main__":
 	dictionary = create_dictionary.getDictFromDisk('dict')
 	dictionarylength = len(dictionary)
 	print(dictionary["0"])
-	# matrix = TermFrequency.initializeTfMatrix(dictionary["0"], dictionarylength)
 	start = time.time()
 	for i in range(0,numberofprocesses):
 
@@ -96,16 +93,14 @@ if __name__ == "__main__":
 			print("Started")
 		elif B != None:
 			A = sparse.vstack((A,B))
-			print("growing", A.get_shape())
 
 	print(A.get_shape())
-	print(A)
 	for t in pool:
 		t.join()
 	end = time.time() - start 	
-
+	print(A)
 	print("Current size of tf matrix'",
-          sys.getsizeof(A) / 1000, "Kbytes")
+          (A.data.nbytes) / 1000000, "mbytes")
 	print(end)
 	
 	
