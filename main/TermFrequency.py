@@ -1,6 +1,5 @@
 import create_dictionary as cd
 import tokenization as tk
-import idf 
 import sys
 import time
 import numpy as np
@@ -14,9 +13,7 @@ def getLines(line, dictionary, linenumber, matrix, buffersize):
     for token in line:
         if token in dictionary:
             element = dictionary[token]
-            # elements.append(element)
             incrementMatrix(element, linenumber, matrix, tokencount)
-    # for element
   
 
 def main(file, dictionaryname):

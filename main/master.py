@@ -1,4 +1,4 @@
-import create_dictionary, idf, TermFrequency,tokenization, multiprocessing, time, sys, os
+import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys, os
 from scipy import sparse
 import numpy as np
 
@@ -69,12 +69,16 @@ if __name__ == "__main__":
 	input_q = multiprocessing.Queue()
 	outupt_q = multiprocessing.Queue() 
 	pool = []
+	if sys.argv[3] == None:
+		numberofprocesses = multiprocessing.cpu_count()
+	else:
+		numberofprocesses = int(sys.argv[3])
+	print("Number of processes initialized:", numberofprocesses)
 	dictionary = create_dictionary.getDictFromDisk(sys.argv[1])
 	buffersize = sys.argv[2]
 	print(len(dictionary))
 	print(dictionary["0"])
 	done = 0
-	numberofprocesses = multiprocessing.cpu_count()
 	dictionarylength = len(dictionary)
 	
 	start = time.time()
