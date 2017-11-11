@@ -1,5 +1,6 @@
 import create_dictionary as cd
 import tokenization as tk
+import idf 
 import sys
 import time
 import numpy as np
@@ -13,7 +14,9 @@ def getLines(line, dictionary, linenumber, matrix, buffersize):
     for token in line:
         if token in dictionary:
             element = dictionary[token]
+            # elements.append(element)
             incrementMatrix(element, linenumber, matrix, tokencount)
+    # for element
   
 
 def main(file, dictionaryname):
@@ -30,13 +33,7 @@ def main(file, dictionaryname):
 
 def incrementMatrix(element,linenumber, matrix, factor):
     
-    matrix[linenumber,element] += 1/factor
-
-
-def addToTfMatrix(array, linenumber, matrix):
-
-    array = np.asarray(array)
-    np.insert(matrix, linenumber, array, axis=0)
+    matrix[linenumber, element] += 1/factor
 
 
 def initializeTfMatrix(numberoflines, length):

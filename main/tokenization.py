@@ -6,21 +6,6 @@ import sys
 ignore = str.maketrans(dict.fromkeys(string.punctuation))
 
 
-def tokenize(file, fun, *args):
-
-    starttime = time.time()
-
-    linenumber = 0
-    with open(file, 'r') as myfile:
-
-        for line in myfile:
-        	linenumber = tokenizeLine(line,linenumber, fun, *args)
-        
-    endtime = time.time() - starttime
-    
-    print("Time to create dictionary:",endtime)
-
-
 def tokenizeLine(line):
 	tokens = []
 	line = line.split(" ")
