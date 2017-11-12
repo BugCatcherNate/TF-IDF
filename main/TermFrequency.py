@@ -15,6 +15,14 @@ def getLines(line, dictionary, linenumber, matrix, buffersize):
             element = dictionary[token]
             incrementMatrix(element, linenumber, matrix, tokencount)
   
+def idf(line, dictionary, idf):
+
+    line = set(tk.tokenizeLine(line))
+    for token in line:
+        if token in dictionary:
+            element = dictionary[token]
+            idf[element] += 1
+
 
 def main(file, dictionaryname):
 

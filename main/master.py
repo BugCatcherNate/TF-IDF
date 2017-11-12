@@ -2,11 +2,10 @@ import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys
 from scipy import sparse
 import numpy as np
 
-def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersize):
+def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersize, done_count):
 	
 	linenumber = 0
 	lines = []
-	count = 0
 	buffersize = int(buffersize)
 
 	for filename in os.listdir("../input"):
@@ -17,67 +16,92 @@ def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersiz
 
 				for line in myfile:
 			
-					count += 1
 					lines.append(line)
 					linenumber += 1
-					if linenumber == buffersize:
-						q.put(lines)
-						lines = []
-						linenumber = 0
-				q.put(lines)
-				print(count)
+					q.put(line)
+				
 	for i in range(0, numberofprocesses):
 		q.put(None)
-	print("becoming consumer")
-	consume(q, dictionary, 0, dictionarylength, slave)
+	consume(q, dictionary, 0, dictionarylength, slave, done_count)
 		
 	
-def consume(q, dictionary, i, dictionarylength, slave):
+def consume(q, dictionary, i, dictionarylength, slave, done_count):
 
-	local_collect = None
-	linenumber = 0	
-	count = 0
+	localidf = np.zeros((dictionarylength), dtype = np.int)
 	while True:
 		
 		lineset = q.get()
 	
 		if lineset is None:
 			
-			slave.put(local_collect)
-			slave.put(None)
-			break
-
-		local = TermFrequency.initializeTfMatrix(len(lineset), dictionarylength)
-		for line in lineset:
-			count += 1
-			TermFrequency.getLines(line, dictionary, linenumber, local, len(lineset))
-			linenumber += 1
-		linenumber = 0
-		if local_collect == None:
-			local_collect = local
-		else:
-			local_collect = sparse.vstack((local_collect, local)) 
+			slave.put(localidf)
 		
+			print(i,"Sending")
+			break
+		else:
+			TermFrequency.idf(lineset, dictionary, localidf)
 			
 def addToQueue(tokens,linenumber,q):
 
 	q.put(tokens)
 
+def reader(output_q, done_count, corpus, dictionarylength):
+
+	idf = readIDF(corpus, dictionarylength)
+	done = 0
+	while True:
+
+		B = output_q.get()
+		idf = np.add(idf, B)
+		done += 1
+		if done == numberofprocesses -1:
+			break
+	saveIDF(idf, corpus)
+	print("Current siave of idf matrix", (idf.nbytes)/ 1000000, "mbytes")
+
+def resizeIDF(idf, dictionarylength):
+
+	if dictionarylength > idf.size:
+		toadd = dictionarylength - idf.size
+		idf = np.hstack([idf, np.zeros((toadd), dtype = np.int)])
+	return idf
+
+def saveIDF(idf, corpus):
+
+	idfname = "../output/Matrices/"+str(corpus)+"_idf"
+	np.save(idfname, idf)
+	
+def readIDF(corpus, dictionarylength):
+
+	idfname = "../output/Matrices/"+str(corpus)+"_idf.npy"
+
+	try:
+		idf = np.load(idfname)
+		print("idfloadedsize", idf.size)
+		idf = resizeIDF(idf, dictionarylength)
+		print("After", idf.size)
+	except:
+		idf = np.zeros((dictionarylength), dtype = np.int)
+	return idf
 
 if __name__ == "__main__":
 
+	lock = multiprocessing.Lock()
 	input_q = multiprocessing.Queue()
-	outupt_q = multiprocessing.Queue() 
+	output_q = multiprocessing.Queue()
+	done_count = multiprocessing.Value('i',0)
 	pool = []
-	if sys.argv[3] == None:
-		numberofprocesses = multiprocessing.cpu_count()
-	else:
-		numberofprocesses = int(sys.argv[3])
+	corpus = sys.argv[1]
+	numberofprocesses = int(sys.argv[3])
 	print("Number of processes initialized:", numberofprocesses)
-	dictionary = create_dictionary.getDictFromDisk(sys.argv[1])
+	dictionary = create_dictionary.getDictFromDisk(corpus)
+
+	if not dictionary:
+		print("Error: Dictionary", "'"+corpus+"'", "does not exist")
+		print("Exiting")
+		exit()
 	buffersize = sys.argv[2]
-	print(len(dictionary))
-	print(dictionary["0"])
+	
 	done = 0
 	dictionarylength = len(dictionary)
 	
@@ -85,39 +109,19 @@ if __name__ == "__main__":
 	for i in range(0,numberofprocesses):
 
 		if i == 0:
-			process = multiprocessing.Process(target=produce, args=(input_q, numberofprocesses, dictionary, dictionarylength, outupt_q, buffersize))
+			process = multiprocessing.Process(target=produce, args=(input_q, numberofprocesses, dictionary, dictionarylength, output_q, buffersize, done_count))
+		elif i == 1:
+			process = multiprocessing.Process(target=reader, args=(output_q, done_count, corpus, dictionarylength))
 		else:
-			process = multiprocessing.Process(target=consume, args=(input_q, dictionary, i, dictionarylength, outupt_q))
-		
-		process.start()
+			process = multiprocessing.Process(target=consume, args=(input_q, dictionary, i, dictionarylength, output_q, done_count))
 		pool.append(process)
-
-	A = None
-	idf = None
-	while True:
 		
-		B = outupt_q.get()
-		if B == None:
-			done += 1
-			if done == numberofprocesses:
-				break
-		if A == None:
-			A = B
-			print("Started")
-			idf = A.getnnz(axis=0)
-		elif B != None:
-			A = sparse.vstack((A,B))
-			idf = np.add(idf, B.getnnz(axis=0))
-			
-
-	print(A.get_shape())
-	for t in pool:
-		t.join()
-	end = time.time() - start 	
-	print("Current size of tf matrix'",
-          (A.data.nbytes) / 1000000, "mbytes")
-	print(idf)
-
+	for process in pool:
+		process.start()
+	for process in pool:
+		process.join()
+	end = time.time() - start 
+	
 	print(end)
 
 	
