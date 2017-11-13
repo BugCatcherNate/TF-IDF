@@ -43,7 +43,6 @@ def incrementMatrix(element, matrix, factor):
     matrix[element] += 1/factor
 
 
-
 def initializeTfMatrix(length):
 
     matrix = np.zeros((length))
