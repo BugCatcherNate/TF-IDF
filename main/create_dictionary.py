@@ -4,16 +4,17 @@ import pickle
 import os.path
 
 
-def createdictionary(tokens, dictionary):
+def createdictionary(tokens, dictionary, lines):
 
-	for word in tokens:
-		count = len(dictionary)
-
-
-		if word not in dictionary:
-			dictionary[word] = count
-			
-
+    notempty = False
+    for word in tokens:
+        count = len(dictionary)-1
+        notempty = True
+        if word not in dictionary:
+            dictionary[word] = count
+    if notempty == True:
+        lines += 1
+    return lines 	
 
 def getDictFromDisk(dictname):
 
@@ -25,6 +26,7 @@ def getDictFromDisk(dictname):
     else:
         
         dict = {}
+        dict['0'] = 0
 
     return dict 
 
@@ -37,23 +39,24 @@ def saveDictToDisk(dict, dictname):
 
 
 def main(dictname):
-    count = 0
+
     dictionary = getDictFromDisk(dictname)
+    count = dictionary['0']
     for filename in os.listdir("../input"):
         if str(filename).endswith(".txt"):
             with open(os.path.join("../input", filename), 'r') as myfile:
 
                 for line in myfile:
-                    count += 1
 
                     tokens = tokenization.tokenizeLine(line)
 
-                    createdictionary(tokens, dictionary)
-    print("made", count)
+                    count = createdictionary(tokens, dictionary, count)
+    dictionary['0'] = count
+    print("lines", count)
 
     print("Current size of dictionary '", dictname, "':",
           sys.getsizeof(dictionary) / 1000000, "Mbytes")
-    print(len(dictionary))
+    print(len(dictionary)-1)
     saveDictToDisk(dictionary, dictname)
     return dictionary
 

@@ -1,4 +1,4 @@
-import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys, os
+import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys, os, math
 from scipy import sparse
 import numpy as np
 
@@ -27,7 +27,7 @@ def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersiz
 	
 def consume(q, dictionary, i, dictionarylength, slave, done_count):
 
-	localidf = np.zeros((dictionarylength), dtype = np.int)
+	localidf = np.zeros((dictionarylength))
 	while True:
 		
 		lineset = q.get()
@@ -55,7 +55,8 @@ def reader(output_q, done_count, corpus, dictionarylength):
 		idf = np.add(idf, B)
 		done += 1
 		if done == numberofprocesses -1:
-			break
+			break	
+	print(idf)
 	saveIDF(idf, corpus)
 	print("Current siave of idf matrix", (idf.nbytes)/ 1000000, "mbytes")
 
@@ -63,25 +64,27 @@ def resizeIDF(idf, dictionarylength):
 
 	if dictionarylength > idf.size:
 		toadd = dictionarylength - idf.size
-		idf = np.hstack([idf, np.zeros((toadd), dtype = np.int)])
+		idf = np.hstack([idf, np.zeros((toadd))])
 	return idf
 
 def saveIDF(idf, corpus):
 
 	idfname = "../output/Matrices/"+str(corpus)+"_idf"
 	np.save(idfname, idf)
-	
+def normalizeIDF(element,factor):
+
+	element = math.log((factor/element),10)
+	return element
+
 def readIDF(corpus, dictionarylength):
 
 	idfname = "../output/Matrices/"+str(corpus)+"_idf.npy"
 
 	try:
 		idf = np.load(idfname)
-		print("idfloadedsize", idf.size)
 		idf = resizeIDF(idf, dictionarylength)
-		print("After", idf.size)
 	except:
-		idf = np.zeros((dictionarylength), dtype = np.int)
+		idf = np.zeros((dictionarylength))
 	return idf
 
 if __name__ == "__main__":
@@ -103,7 +106,7 @@ if __name__ == "__main__":
 	buffersize = sys.argv[2]
 	
 	done = 0
-	dictionarylength = len(dictionary)
+	dictionarylength = len(dictionary)-1
 	
 	start = time.time()
 	for i in range(0,numberofprocesses):

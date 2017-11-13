@@ -6,14 +6,16 @@ import numpy as np
 from scipy import sparse
 
 
-def getLines(line, dictionary, linenumber, matrix, buffersize):
+def getLines(line, dictionary, matrix):
     
     line = tk.tokenizeLine(line)
     tokencount = len(line)
     for token in line:
         if token in dictionary:
             element = dictionary[token]
-            incrementMatrix(element, linenumber, matrix, tokencount)
+            incrementMatrix(element, matrix, tokencount)
+
+    return matrix
   
 def idf(line, dictionary, idf):
 
@@ -36,15 +38,16 @@ def main(file, dictionaryname):
           sys.getsizeof(matrix) / 1000000, "Mbytes")
     print(matrix[0])
 
-def incrementMatrix(element,linenumber, matrix, factor):
+def incrementMatrix(element, matrix, factor):
+
+    matrix[element] += 1/factor
+
+
+
+def initializeTfMatrix(length):
+
+    matrix = np.zeros((length))
     
-    matrix[linenumber, element] += 1/factor
-
-
-def initializeTfMatrix(numberoflines, length):
-
-
-    matrix = sparse.lil_matrix((numberoflines, length), dtype='float')
     return matrix
 
 if __name__ == '__main__':
