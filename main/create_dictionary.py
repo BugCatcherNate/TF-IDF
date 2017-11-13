@@ -63,11 +63,7 @@ def main(dictname):
 
                     count = createdictionary(tokens, dictionary, count)
     dictionary['0'] = count
-    print("lines", count)
-
-    print("Current size of dictionary '", dictname, "':",
-          sys.getsizeof(dictionary) / 1000000, "Mbytes")
-    print(len(dictionary)-1)
+  
     saveDictToDisk(dictionary, dictname)
     return dictionary
 

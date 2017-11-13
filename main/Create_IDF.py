@@ -1,8 +1,8 @@
-import create_dictionary, TermFrequency,tokenization, multiprocessing, time, sys, os, math
+import create_dictionary, TermFrequency,tokenization, multiprocessing, pickle,time, sys, os, math, hashlib
 from scipy import sparse
 import numpy as np
 
-def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersize, done_count):
+def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersize, done_count, corpus):
 	
 	linenumber = 0
 	lines = []
@@ -10,7 +10,7 @@ def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersiz
 
 	for filename in os.listdir("../input"):
 		
-		if str(filename).endswith(".txt"):
+		if str(filename).endswith(".txt") and checkFile(os.path.join("../input", filename), corpus):
 
 			with open(os.path.join("../input", filename), 'r') as myfile:
 
@@ -36,7 +36,6 @@ def consume(q, dictionary, i, dictionarylength, slave, done_count):
 			
 			slave.put(localidf)
 		
-			print(i,"Sending")
 			break
 		else:
 			TermFrequency.idf(lineset, dictionary, localidf)
@@ -46,14 +45,35 @@ def singleConsume(corpus, line):
 	localidf = np.zeros((dictionarylength))
 	TermFrequency.idf(line, dictionary, localidf)
 	idf = readIDF(corpus, dictionarylength)
-	print("Before add", (idf.size))
 	idf = np.add(idf,localidf)
 	saveIDF(idf, corpus)
-	print("Current siave of idf matrix", (idf.shape), "mbytes")
 
 def addToQueue(tokens,linenumber,q):
 
 	q.put(tokens)
+def checkFile(file, coprus):
+
+	hexdictionary = "../output/Dictionaries/"+corpus+"_hash.p"
+
+	if os.path.isfile(hexdictionary):
+		hexdict = pickle.load(open(hexdictionary, "rb"))
+	else:
+		hexdict = []
+	m = hashlib.md5()
+	with open(file, 'rb') as afile:
+		buf = afile.read()
+		m.update(buf)
+		key = m.hexdigest()
+		if key not in hexdict:
+			print("expanding corpus with file")
+			
+			hexdict.append(key)
+			pickle.dump(hexdict, open(hexdictionary, "wb"))	
+			return True
+		else:
+
+			print("file already in corpus")
+			return False
 
 def reader(output_q, done_count, corpus, dictionarylength):
 
@@ -68,7 +88,7 @@ def reader(output_q, done_count, corpus, dictionarylength):
 			break	
 	print(idf)
 	saveIDF(idf, corpus)
-	print("Current siave of idf matrix", (idf.nbytes)/ 1000000, "mbytes")
+	
 
 def resizeIDF(idf, dictionarylength):
 
@@ -99,12 +119,14 @@ def readIDF(corpus, dictionarylength):
 
 if __name__ == "__main__":
 
+
 	lock = multiprocessing.Lock()
 	input_q = multiprocessing.Queue()
 	output_q = multiprocessing.Queue()
 	done_count = multiprocessing.Value('i',0)
 	pool = []
 	corpus = sys.argv[1]
+	create_dictionary.main(corpus)	
 	numberofprocesses = int(sys.argv[3])
 	print("Number of processes initialized:", numberofprocesses)
 	dictionary = create_dictionary.getDictFromDisk(corpus)
@@ -122,7 +144,7 @@ if __name__ == "__main__":
 	for i in range(0,numberofprocesses):
 
 		if i == 0:
-			process = multiprocessing.Process(target=produce, args=(input_q, numberofprocesses, dictionary, dictionarylength, output_q, buffersize, done_count))
+			process = multiprocessing.Process(target=produce, args=(input_q, numberofprocesses, dictionary, dictionarylength, output_q, buffersize, done_count, corpus))
 		elif i == 1:
 			process = multiprocessing.Process(target=reader, args=(output_q, done_count, corpus, dictionarylength))
 		else:
