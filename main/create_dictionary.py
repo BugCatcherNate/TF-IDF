@@ -30,6 +30,21 @@ def getDictFromDisk(dictname):
 
     return dict 
 
+def singleAdd(dictname, line):
+
+    dictionary = getDictFromDisk(dictname)
+    count = dictionary['0']
+   
+    tokens = tokenization.tokenizeLine(line)
+
+    count = createdictionary(tokens, dictionary, count)
+    dictionary['0'] = count
+    print("lines", count)
+
+    print("Current size of dictionary '", dictname, "':",
+          sys.getsizeof(dictionary) / 1000000, "Mbytes")
+    print(len(dictionary)-1)
+    saveDictToDisk(dictionary, dictname)
 
 def saveDictToDisk(dict, dictname):
 

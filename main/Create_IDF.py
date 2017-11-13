@@ -40,7 +40,17 @@ def consume(q, dictionary, i, dictionarylength, slave, done_count):
 			break
 		else:
 			TermFrequency.idf(lineset, dictionary, localidf)
-			
+def singleConsume(corpus, line):
+	dictionary = create_dictionary.getDictFromDisk(corpus)
+	dictionarylength = len(dictionary)-1
+	localidf = np.zeros((dictionarylength))
+	TermFrequency.idf(line, dictionary, localidf)
+	idf = readIDF(corpus, dictionarylength)
+	print("Before add", (idf.size))
+	idf = np.add(idf,localidf)
+	saveIDF(idf, corpus)
+	print("Current siave of idf matrix", (idf.shape), "mbytes")
+
 def addToQueue(tokens,linenumber,q):
 
 	q.put(tokens)
