@@ -10,7 +10,7 @@ def produce(q, numberofprocesses, dictionary, dictionarylength, slave, buffersiz
 
 	for filename in os.listdir("../input"):
 		
-		if str(filename).endswith(".txt") and checkFile(os.path.join("../input", filename), corpus):
+		if str(filename).endswith(".txt") and checkFile(filename,corpus):
 
 			with open(os.path.join("../input", filename), 'r') as myfile:
 
@@ -59,21 +59,18 @@ def checkFile(file, coprus):
 		hexdict = pickle.load(open(hexdictionary, "rb"))
 	else:
 		hexdict = []
-	m = hashlib.md5()
-	with open(file, 'rb') as afile:
-		buf = afile.read()
-		m.update(buf)
-		key = m.hexdigest()
-		if key not in hexdict:
-			print("expanding corpus with file")
+	
+	
+	if file not in hexdict:
+		print("expanding corpus with", file)
 			
-			hexdict.append(key)
-			pickle.dump(hexdict, open(hexdictionary, "wb"))	
-			return True
-		else:
+		hexdict.append(file)
+		pickle.dump(hexdict, open(hexdictionary, "wb"))	
+		return True
+	else:
 
-			print("file already in corpus")
-			return False
+		print(file,"already in corpus")
+		return False
 
 def reader(output_q, done_count, corpus, dictionarylength):
 
@@ -86,7 +83,7 @@ def reader(output_q, done_count, corpus, dictionarylength):
 		done += 1
 		if done == numberofprocesses -1:
 			break	
-	print(idf)
+
 	saveIDF(idf, corpus)
 	
 

@@ -1,6 +1,6 @@
-import wikipedia, os.path, hashlib, comparestrings, create_dictionary as cd, Create_IDF as cidf, pickle
+import wikipedia,sys, os.path, hashlib, comparestrings, create_dictionary as cd, Create_IDF as cidf, pickle
 
-corpus = 'test'
+
 
 def addtoCorpus(text, corpus):
 
@@ -23,11 +23,13 @@ def checktext(text, corpus):
 		hexdict.append(key)
 		pickle.dump(hexdict, open(hexdictionary, "wb"))
 
-		
-while True:
-	subject = input("what would you like to test?:")
-	text = wikipedia.summary(subject)
-	checktext(text, corpus)
-	userdef = input("Please define " + subject +" in your own words:")
-	comparestrings.main(corpus, text, userdef)
+if __name__ == '__main__':
+	
+	corpus = sys.argv[1]			
+	while True:
+		subject = input("what would you like to test?:")
+		text = wikipedia.summary(subject)
+		checktext(text, corpus)
+		userdef = input("Please define " + subject +" in your own words:")
+		comparestrings.main(corpus, text, userdef)
 
